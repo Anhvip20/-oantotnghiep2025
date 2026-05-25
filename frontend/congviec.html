@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quản lý công việc</title>
+    <link rel="stylesheet" href="congviec.css" />
+</head>
+
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="topbar">
+                <div>
+                    <h1>Quản lý công việc</h1>
+                    <p class="sub">Thêm và xem danh sách công việc</p>
+                </div>
+                <button id="logoutBtn" class="danger">Đăng xuất</button>
+            </div>
+
+            <div class="info-box">
+                <p><strong>Người dùng:</strong> <span id="userInfo"></span></p>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <a href="dashboard.html" class="nav-btn">Tổng quan</a>
+            <a href="nhanvien.html" class="nav-btn" id="navNhanVien">Nhân viên</a>
+            <a href="congviec.html" class="nav-btn active">Công việc</a>
+            <a href="chatbot.html" class="nav-btn">Chatbot</a>
+        </div>
+
+        <label for="searchCongViec">Tìm kiếm công việc</label>
+        <input type="text" id="searchCongViec" placeholder="Nhập tiêu đề công việc..." />
+
+        <button id="showAddCongViecBtn" class="secondary">Thêm công việc</button>
+
+        <div class="card" id="congViecFormCard" style="display:none;">
+            <h2 id="congViecFormTitle"></h2>
+
+            <label for="tieuDe">Tiêu đề</label>
+            <input type="text" id="tieuDe" placeholder="Nhập tiêu đề công việc" />
+
+            <label for="moTa">Mô tả</label>
+            <textarea id="moTa" placeholder="Nhập mô tả công việc"></textarea>
+
+            <label for="trangThai">Trạng thái</label>
+            <select id="trangThai">
+                <option value="Chưa làm">Chuẩn bị làm</option>
+                <option value="Đang làm">Đang làm</option>
+                <option value="Hoàn thành">Hoàn thành</option>
+            </select>
+
+            <label for="han">Hạn</label>
+            <input type="date" id="han" />
+
+            <label for="nhanVienId">Chọn nhân viên</label>
+            <select id="nhanVienId">
+                <option value="">-- Chọn nhân viên --</option>
+            </select>
+
+            <button id="addCongViecBtn">Thêm công việc</button>
+            <button id="cancelCongViecBtn" class="secondary">Đóng</button>
+            <p id="taskMessage" class="message"></p>
+        </div>
+
+        <div class="card">
+            <div class="section-header">
+                <h2>Danh sách công việc</h2>
+            </div>
+            <div id="congViecList" class="list-box"></div>
+        </div>
+    </div>
+
+    <script src="congviec.js"></script>
+
+</body>
+
+</html>
