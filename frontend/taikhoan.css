@@ -87,11 +87,12 @@ body {
     flex: 1;
     margin-left: 260px;
     padding: 25px;
+    box-sizing: border-box;
 }
 
 .container {
     width: 100%;
-    max-width: 1400px;
+    max-width: 1000px;
     margin: 0 auto;
 }
 
@@ -114,113 +115,49 @@ body {
     margin-top: 8px;
 }
 
-.info-box {
-    margin-top: 35px;
+.account-card {
+    max-width: 600px;
 }
 
-label {
-    font-weight: 500;
+.avatar {
+    width: 90px;
+    height: 90px;
+    background-color: #f3e6d9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    font-size: 42px;
 }
 
-#searchCongViec {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    box-sizing: border-box;
-    margin-top: 10px;
+.account-card h2 {
+    margin-top: 0;
+}
+
+.account-info {
     background-color: #fff8f0;
+    border-radius: 12px;
+    padding: 18px;
+    margin: 20px 0;
 }
 
-button {
-    padding: 10px 16px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 500;
-    transition: 0.3s;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-.secondary {
-    background-color: #3498db;
-    color: #fff;
+.account-info p {
+    margin: 12px 0;
 }
 
 .danger {
     background-color: #e74c3c;
     color: #fff;
-}
-
-#congViecFormCard label {
-    display: block;
-    margin-top: 15px;
-}
-
-#congViecFormCard input,
-#congViecFormCard select,
-#congViecFormCard textarea {
-    width: 100%;
-    padding: 12px;
+    padding: 10px 16px;
+    border: none;
     border-radius: 10px;
-    border: 1px solid #ddd;
-    margin-top: 8px;
-    box-sizing: border-box;
-    background-color: #fff8f0;
-}
-
-#congViecFormCard textarea {
-    min-height: 100px;
-    resize: vertical;
-}
-
-#congViecFormCard button {
-    margin-top: 20px;
-    margin-right: 8px;
-}
-
-.message {
-    margin-top: 10px;
-    color: green;
+    cursor: pointer;
     font-weight: 500;
 }
 
-.list-box {
-    max-height: 500px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-
-.list-box .item {
-    padding: 16px;
-    border-radius: 10px;
-    background-color: #fff8f0;
-    margin-bottom: 12px;
-}
-
-.list-box .item strong {
-    font-size: 16px;
-}
-
-.list-box .item button {
-    margin-right: 8px;
-    margin-top: 10px;
-}
-
-.list-box::-webkit-scrollbar {
-    width: 8px;
-}
-
-.list-box::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.35);
-    border-radius: 4px;
-}
-
-.list-box::-webkit-scrollbar-track {
-    background: #fdf6ec;
+.danger:hover {
+    background-color: #c0392b;
 }
 
 @media (max-width: 700px) {

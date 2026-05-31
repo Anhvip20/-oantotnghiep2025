@@ -9,72 +9,92 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="topbar">
-                <div>
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="menu-icon" id="toggleSidebar">☰</span>
+                <span>💼 Quản lý công việc</span>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="sidebar-link">🏠 Tổng quan</a>
+                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">👥 Nhân viên</a>
+                <a href="congviec.html" class="sidebar-link active">📋 Công việc</a>
+                <a href="chatbot.html" class="sidebar-link">💬 Chatbot</a>
+            </nav>
+
+            <div class="sidebar-section">
+                <p>TÀI KHOẢN</p>
+                <a href="taikhoan.html" class="sidebar-link">
+                    👤 Tài khoản
+                </a>
+                <button id="logoutBtn" class="sidebar-link sidebar-btn">↪ Đăng xuất</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="container">
+
+                <div class="card header-card">
                     <h1>Quản lý công việc</h1>
                     <p class="sub">Thêm và xem danh sách công việc</p>
+
+                    <div class="info-box">
+                        <p><strong>Người dùng:</strong> <span id="userInfo"></span></p>
+                    </div>
                 </div>
-                <button id="logoutBtn" class="danger">Đăng xuất</button>
+
+                <div class="card">
+                    <label for="searchCongViec">Tìm kiếm công việc</label>
+                    <input type="text" id="searchCongViec" placeholder="Nhập tiêu đề công việc..." />
+
+                    <br><br>
+
+                    <button id="showAddCongViecBtn" class="secondary">Thêm công việc</button>
+                </div>
+
+                <div class="card" id="congViecFormCard" style="display:none;">
+                    <h2 id="congViecFormTitle">Thêm công việc</h2>
+
+                    <label for="tieuDe">Tiêu đề</label>
+                    <input type="text" id="tieuDe" placeholder="Nhập tiêu đề công việc" />
+
+                    <label for="moTa">Mô tả</label>
+                    <textarea id="moTa" placeholder="Nhập mô tả công việc"></textarea>
+
+                    <label for="trangThai">Trạng thái</label>
+                    <select id="trangThai">
+                        <option value="Chưa làm">Chuẩn bị làm</option>
+                        <option value="Đang làm">Đang làm</option>
+                        <option value="Hoàn thành">Hoàn thành</option>
+                    </select>
+
+                    <label for="han">Hạn</label>
+                    <input type="date" id="han" />
+
+                    <label for="nhanVienId">Chọn nhân viên</label>
+                    <select id="nhanVienId">
+                        <option value="">-- Chọn nhân viên --</option>
+                    </select>
+
+                    <button id="addCongViecBtn">Thêm công việc</button>
+                    <button id="cancelCongViecBtn" class="secondary">Đóng</button>
+
+                    <p id="taskMessage" class="message"></p>
+                </div>
+
+                <div class="card">
+                    <h2>Danh sách công việc</h2>
+                    <div id="congViecList" class="list-box"></div>
+                </div>
+
             </div>
+        </main>
 
-            <div class="info-box">
-                <p><strong>Người dùng:</strong> <span id="userInfo"></span></p>
-            </div>
-        </div>
-
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-btn">Tổng quan</a>
-            <a href="nhanvien.html" class="nav-btn" id="navNhanVien">Nhân viên</a>
-            <a href="congviec.html" class="nav-btn active">Công việc</a>
-            <a href="chatbot.html" class="nav-btn">Chatbot</a>
-        </div>
-
-        <label for="searchCongViec">Tìm kiếm công việc</label>
-        <input type="text" id="searchCongViec" placeholder="Nhập tiêu đề công việc..." />
-
-        <button id="showAddCongViecBtn" class="secondary">Thêm công việc</button>
-
-        <div class="card" id="congViecFormCard" style="display:none;">
-            <h2 id="congViecFormTitle"></h2>
-
-            <label for="tieuDe">Tiêu đề</label>
-            <input type="text" id="tieuDe" placeholder="Nhập tiêu đề công việc" />
-
-            <label for="moTa">Mô tả</label>
-            <textarea id="moTa" placeholder="Nhập mô tả công việc"></textarea>
-
-            <label for="trangThai">Trạng thái</label>
-            <select id="trangThai">
-                <option value="Chưa làm">Chuẩn bị làm</option>
-                <option value="Đang làm">Đang làm</option>
-                <option value="Hoàn thành">Hoàn thành</option>
-            </select>
-
-            <label for="han">Hạn</label>
-            <input type="date" id="han" />
-
-            <label for="nhanVienId">Chọn nhân viên</label>
-            <select id="nhanVienId">
-                <option value="">-- Chọn nhân viên --</option>
-            </select>
-
-            <button id="addCongViecBtn">Thêm công việc</button>
-            <button id="cancelCongViecBtn" class="secondary">Đóng</button>
-            <p id="taskMessage" class="message"></p>
-        </div>
-
-        <div class="card">
-            <div class="section-header">
-                <h2>Danh sách công việc</h2>
-            </div>
-            <div id="congViecList" class="list-box"></div>
-        </div>
     </div>
 
     <script src="congviec.js"></script>
-
 </body>
 
 </html>

@@ -6,87 +6,157 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
-
 </head>
 
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="topbar">
-                <div>
-                    <h1>Dashboard</h1>
-                    <p class="sub">Hệ thống quản lý công việc văn phòng</p>
+
+    <div class="app-layout">
+
+        <aside class="sidebar">
+
+            <div class="sidebar-logo">
+                <span class="menu-icon" id="toggleSidebar">☰</span>
+                <span>💼 Quản lý công việc</span>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="sidebar-link active">
+                    🏠 Tổng quan
+                </a>
+
+                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">
+                    👥 Nhân viên
+                </a>
+
+                <a href="congviec.html" class="sidebar-link">
+                    📋 Công việc
+                </a>
+
+                <a href="chatbot.html" class="sidebar-link">
+                    💬 Chatbot
+                </a>
+            </nav>
+
+            <div class="sidebar-section">
+                <p>QUẢN LÝ</p>
+
+                <div class="sidebar-link notification-sidebar">
+                    🔔 Thông báo
+                    <span id="notificationCount">0</span>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
 
-                    <div class="notification-wrapper">
-                        <button id="notificationBtn" class="notification-btn">
-                            🔔 <span id="notificationCount">0</span>
+                <div id="notificationDropdown" class="notification-dropdown">
+
+                    <div class="notification-header">
+                        <h3>Thông báo</h3>
+
+                        <button id="closeNotificationBtn" class="close-notification-btn">
+                            ✖
                         </button>
-
-                        <div id="notificationDropdown" class="notification-dropdown">
-
-                            <div class="notification-header">
-                                <h3>Thông báo</h3>
-                                <button id="closeNotificationBtn" class="close-notification-btn">
-                                    ✖
-                                </button>
-                            </div>
-                            <div id="notificationList"></div>
-
-                        </div>
                     </div>
 
-                    <button id="logoutBtn" class="danger">Đăng xuất</button>
+                    <div id="notificationList"></div>
 
                 </div>
             </div>
 
-            <div class="info-box">
-                <p><strong>Người dùng:</strong> <span id="userInfo"></span></p>
-            </div>
-        </div>
+            <div class="sidebar-section">
+                <p>TÀI KHOẢN</p>
 
-        <div class="nav-links">
-            <a href="dashboard.html" class="nav-btn active">Tổng quan</a>
-            <a href="nhanvien.html" class="nav-btn" id="navNhanVien">
-                Nhân viên
-            </a>
-            <a href="congviec.html" class="nav-btn">Công việc</a>
-            <a href="chatbot.html" class="nav-btn">Chatbot</a>
-        </div>
+                <a href="taikhoan.html" class="sidebar-link">
+                    👤 Tài khoản
+                </a>
 
-        <div class="grid">
-            <div class="card" id="tongNhanVienCard">
-                <h2><span class="card-icon">👥</span> Tổng nhân viên</h2>
-                <p class="big-number" id="tongNhanVien">0</p>
+                <button id="logoutBtn" class="sidebar-link sidebar-btn">
+                    ↪ Đăng xuất
+                </button>
             </div>
 
-            <div class="card">
-                <h2><span class="card-icon">📋</span> Tổng công việc</h2>
-                <p class="big-number" id="tongCongViec">0</p>
+        </aside>
+
+        <main class="main-content">
+
+            <div class="container">
+
+                <div class="card header-card">
+
+                    <h1>Dashboard</h1>
+
+                    <p class="sub">
+                        Hệ thống quản lý công việc văn phòng
+                    </p>
+
+                    <div class="info-box">
+                        <p>
+                            <strong>Người dùng:</strong>
+                            <span id="userInfo"></span>
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="grid">
+
+                    <div class="card" id="tongNhanVienCard">
+                        <h2>
+                            <span class="card-icon">👥</span>
+                            Tổng nhân viên
+                        </h2>
+
+                        <p class="big-number" id="tongNhanVien">0</p>
+                    </div>
+
+                    <div class="card">
+                        <h2>
+                            <span class="card-icon">📋</span>
+                            Tổng công việc
+                        </h2>
+
+                        <p class="big-number" id="tongCongViec">0</p>
+                    </div>
+
+                    <div class="card">
+                        <h2>
+                            <span class="card-icon">⏳</span>
+                            Đang làm
+                        </h2>
+
+                        <p class="big-number" id="dangLam">0</p>
+                    </div>
+
+                </div>
+
+                <div class="grid bottom-grid">
+
+                    <div class="card" id="nhanVienMoiCard">
+
+                        <h2>Nhân viên mới nhất</h2>
+
+                        <div id="nhanVienMoi" class="list-box"></div>
+
+                    </div>
+
+                    <div class="card" id="congViecCuaToiCard">
+
+                        <h2 id="taskTitle">
+                            Công việc của tôi
+                        </h2>
+
+                        <div id="congViecCuaToi" class="list-box"></div>
+
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="card">
-                <h2><span class="card-icon">⏳</span> Đang làm</h2>
-                <p class="big-number" id="dangLam">0</p>
-            </div>
-        </div>
+        </main>
 
-        <div class="grid">
-            <div class="card" id="nhanVienMoiCard">
-                <h2>Nhân viên mới nhất</h2>
-                <div id="nhanVienMoi" class="list-box"></div>
-            </div>
-
-            <div class="card" id="congViecCuaToiCard">
-                <h2 id="taskTitle">Công việc của tôi</h2>
-                <div id="congViecCuaToi" class="list-box"></div>
-            </div>
-        </div>
     </div>
 
     <script src="dashboard.js"></script>
+
 </body>
 
 </html>
+```

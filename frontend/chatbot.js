@@ -7,9 +7,7 @@ if (!user) {
 }
 
 if (user.role !== "admin") {
-
-    const navNhanVien =
-        document.getElementById("navNhanVien");
+    const navNhanVien = document.getElementById("navNhanVien");
 
     if (navNhanVien) {
         navNhanVien.style.display = "none";
@@ -18,8 +16,6 @@ if (user.role !== "admin") {
 
 document.getElementById("userInfo").textContent =
     `${user?.ten || "Không có tên"} (${user?.role || ""})`;
-
-document.getElementById("userInfo").textContent = `${user.ten} (${user.role})`;
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
     localStorage.removeItem("user");
@@ -38,28 +34,31 @@ document.getElementById("chatInput").addEventListener("keydown", (e) => {
 
 document.querySelectorAll(".suggest-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-        document.getElementById("chatInput").value = btn.textContent.trim();
+        document.getElementById("chatInput").value =
+            btn.textContent.trim();
+
         sendChat();
     });
 });
 
 appendMessage(
     "bot",
-    "Xin chào. Tao là chatbot hỗ trợ công việc. Mày có thể hỏi về nhân viên, công việc, hoặc yêu cầu tóm tắt tình hình hiện tại."
+    "Xin chào. Tôi là chatbot hỗ trợ công việc. Bạn có thể hỏi về nhân viên, công việc hoặc yêu cầu tóm tắt tình hình hiện tại."
 );
 
 function appendMessage(role, text) {
     const chatBox = document.getElementById("chatBox");
     const messageEl = document.createElement("div");
+
     messageEl.className = `chat-message ${role}`;
 
     const title = role === "user" ? "Bạn" : "Chatbot";
     const safeText = formatBotText(String(text || ""));
 
     messageEl.innerHTML = `
-    <div class="chat-role">${title}</div>
-    <div class="chat-text">${safeText}</div>
-  `;
+        <div class="chat-role">${title}</div>
+        <div class="chat-text">${safeText}</div>
+    `;
 
     chatBox.appendChild(messageEl);
     chatBox.scrollTop = chatBox.scrollHeight;
@@ -114,6 +113,7 @@ async function sendChat() {
         }
 
         appendMessage("bot", data.reply || "Không có phản hồi.");
+
     } catch (error) {
         try {
             const fallbackResponse = await fetch(`${API_BASE}/chat`, {
@@ -131,8 +131,10 @@ async function sendChat() {
                 "<br><br><em>(Đang dùng chế độ dữ liệu hệ thống vì AI bị lỗi kết nối.)</em>";
 
             appendMessage("bot", fallbackReply);
+
         } catch (fallbackError) {
             appendMessage("bot", "Không kết nối được server.");
+
             console.error("Chat error:", error);
             console.error("Fallback error:", fallbackError);
         }
@@ -141,9 +143,23 @@ async function sendChat() {
 
 function clearChat() {
     const chatBox = document.getElementById("chatBox");
+
     chatBox.innerHTML = "";
+
     appendMessage(
         "bot",
-        "Hội thoại đã được xóa. Mày có thể hỏi lại từ đầu."
+        "Hội thoại đã được xóa. Bạn có thể hỏi lại từ đầu."
     );
 }
+
+const toggleSidebar =
+    document.getElementById("toggleSidebar");
+
+const sidebar =
+    document.querySelector(".sidebar");
+
+toggleSidebar.addEventListener("click", () => {
+
+    sidebar.classList.toggle("collapsed");
+
+});

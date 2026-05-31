@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tài khoản</title>
+    <link rel="stylesheet" href="taikhoan.css" />
+</head>
+
+<body>
+    <div class="app-layout">
+
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <span class="menu-icon" id="toggleSidebar">☰</span>
+                <span>💼 Quản lý công việc</span>
+            </div>
+
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="sidebar-link">🏠 Tổng quan</a>
+                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">👥 Nhân viên</a>
+                <a href="congviec.html" class="sidebar-link">📋 Công việc</a>
+                <a href="chatbot.html" class="sidebar-link">💬 Chatbot</a>
+            </nav>
+
+            <div class="sidebar-section">
+                <p>TÀI KHOẢN</p>
+                <a href="taikhoan.html" class="sidebar-link active">👤 Tài khoản</a>
+                <button id="logoutBtn" class="sidebar-link sidebar-btn">↪ Đăng xuất</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="container">
+
+                <div class="card header-card">
+                    <h1>Tài khoản cá nhân</h1>
+                    <p class="sub">Thông tin người dùng đang đăng nhập</p>
+                </div>
+
+                <div class="card account-card">
+                    <div class="avatar">👤</div>
+
+                    <h2 id="tenNguoiDung">Đang tải...</h2>
+
+                    <div class="account-info">
+                        <p><strong>ID:</strong> <span id="userId"></span></p>
+                        <p><strong>Họ tên:</strong> <span id="userTen"></span></p>
+                        <p><strong>Email:</strong> <span id="userEmail"></span></p>
+                        <p><strong>Vai trò:</strong> <span id="userRole"></span></p>
+                    </div>
+
+                    <button id="logoutBtnMain" class="danger">Đăng xuất</button>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <script src="taikhoan.js"></script>
+</body>
+
+</html>

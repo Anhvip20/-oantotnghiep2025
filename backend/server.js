@@ -114,28 +114,93 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
 
     const pool = await connectDB();
 
-    await pool
-      .request()
+    // lấy thông báo hiện tại
+    const thongBaoResult = await pool.request()
       .input("id", sql.Int, id)
       .query(`
-        UPDATE ThongBao
-        SET daDoc = 1
-        WHERE id = @id
-      `);
+                SELECT *
+                FROM ThongBao
+                WHERE id = @id
+            `);
+
+    if (thongBaoResult.recordset.length === 0) {
+
+      return res.status(404).json({
+        message: "Không tìm thấy thông báo"
+      });
+    }
+
+    const thongBao =
+      thongBaoResult.recordset[0];
+
+    // cập nhật đã đọc
+    await pool.request()
+      .input("id", sql.Int, id)
+      .query(`
+                UPDATE ThongBao_Read
+                SET
+                    DaDoc = 1,
+                    ThoiGianDoc = GETDATE()
+                WHERE ThongBaoId = @id
+            `);
+
+    // lấy nhân viên đã đọc
+    const nhanVienResult = await pool.request()
+      .input("nhanVienId", sql.Int, thongBao.nhanVienId)
+      .query(`
+                SELECT ten
+                FROM NhanVien
+                WHERE id = @nhanVienId
+            `);
+
+    const tenNhanVien =
+      nhanVienResult.recordset[0]?.ten ||
+      "Nhân viên";
+
+    // tìm admin
+    const adminResult = await pool.request()
+      .query(`
+                SELECT id
+                FROM NhanVien
+                WHERE role = 'admin'
+            `);
+
+    // tạo thông báo cho admin
+    for (const admin of adminResult.recordset) {
+
+      await pool.request()
+        .input(
+          "noiDung",
+          sql.NVarChar,
+          `${tenNhanVien} đã đọc thông báo: "${thongBao.noiDung}"`
+        )
+        .input(
+          "nhanVienId",
+          sql.Int,
+          admin.id
+        )
+        .query(`
+                    INSERT INTO ThongBao (
+                        noiDung,
+                        nhanVienId
+                    )
+                    VALUES (
+                        @noiDung,
+                        @nhanVienId
+                    )
+                `);
+    }
 
     res.json({
-      message: "Đã đọc thông báo"
+      message: "Đã đánh dấu đã đọc"
     });
 
   } catch (error) {
 
-    console.error(
-      "Lỗi PUT /thongbao/dadoc/:id:",
-      error.message
-    );
+    console.error(error);
 
     res.status(500).json({
-      error: error.message
+      message: "Lỗi server"
     });
   }
 });
@@ -617,80 +682,111 @@ app.post("/chat", async (req, res) => {
 });
 
 app.post("/chat-ai", async (req, res) => {
+
   try {
+
     const { message } = req.body;
 
     if (!message || !message.trim()) {
-      return res.status(400).json({ reply: "Mày hãy nhập câu hỏi." });
+
+      return res.status(400).json({
+        reply: "Hãy nhập câu hỏi."
+      });
     }
 
     const pool = await connectDB();
 
     const [staffResult, taskResult, thongKeResult] = await Promise.all([
+
       pool.request().query(`
-        SELECT ten, email, role
-        FROM NhanVien
-        ORDER BY id DESC
-      `),
+                SELECT
+                    ten,
+                    email,
+                    role
+                FROM NhanVien
+                ORDER BY id DESC
+            `),
+
       pool.request().query(`
-        SELECT TOP 10 cv.tieuDe, cv.moTa, cv.trangThai, cv.han, nv.ten AS tenNhanVien
-        FROM CongViec cv
-        LEFT JOIN NhanVien nv ON cv.nhanVienId = nv.id
-        ORDER BY cv.id DESC
-      `),
+                SELECT TOP 3
+                    cv.tieuDe,
+                    cv.moTa,
+                    cv.trangThai,
+                    cv.han,
+                    nv.ten AS tenNhanVien
+                FROM CongViec cv
+                LEFT JOIN NhanVien nv
+                    ON cv.nhanVienId = nv.id
+                ORDER BY cv.id DESC
+            `),
+
       pool.request().query(`
-        SELECT
-          (SELECT COUNT(*) FROM NhanVien WHERE role = 'staff') AS tongNhanVien,
-          (SELECT COUNT(*) FROM CongViec) AS tongCongViec,
-          (SELECT COUNT(*) FROM CongViec WHERE trangThai = N'Đang làm') AS dangLam,
-          (SELECT COUNT(*) FROM CongViec WHERE trangThai = N'Hoàn thành') AS hoanThanh
-      `)
+                SELECT
+                    (SELECT COUNT(*) FROM NhanVien WHERE role = 'staff') AS tongNhanVien,
+                    (SELECT COUNT(*) FROM CongViec) AS tongCongViec,
+                    (SELECT COUNT(*) FROM CongViec WHERE trangThai = N'Đang làm') AS dangLam,
+                    (SELECT COUNT(*) FROM CongViec WHERE trangThai = N'Hoàn thành') AS hoanThanh
+            `)
+
     ]);
 
     const thongKe = thongKeResult.recordset[0];
     const nhanVien = staffResult.recordset;
     const congViec = taskResult.recordset;
 
+
     const prompt = `
-          Bạn là chatbot AI của hệ thống quản lý công việc văn phòng.
-          - Trả lời bằng tiếng Việt.
-          - Ngắn gọn, đúng trọng tâm.
-          - Chỉ dùng dữ liệu được cung cấp.
-          - Không trả lời lý thuyết chung chung.
+Bạn là AI trợ lý quản lý công việc văn phòng.
 
-          DỮ LIỆU HỆ THỐNG:
-          Thống kê:
-          - Tổng nhân viên: ${thongKe.tongNhanVien}
-          - Tổng công việc: ${thongKe.tongCongViec}
-          - Công việc đang làm: ${thongKe.dangLam}
-          - Công việc hoàn thành: ${thongKe.hoanThanh}
+- Trò chuyện tự nhiên như ChatGPT.
+- Trả lời bằng tiếng Việt.
+- Có thể chào hỏi và nói chuyện bình thường.
+- Nếu liên quan công việc thì dùng dữ liệu hệ thống.
+- Trả lời ngắn gọn, dễ hiểu.
 
-        Danh sách nhân viên:
-        ${JSON.stringify(nhanVien, null, 2)}
+THỐNG KÊ:
+- Tổng nhân viên: ${thongKe.tongNhanVien}
+- Tổng công việc: ${thongKe.tongCongViec}
+- Đang làm: ${thongKe.dangLam}
+- Hoàn thành: ${thongKe.hoanThanh}
 
-        Danh sách công việc gần đây:
-        ${JSON.stringify(congViec, null, 2)}
+NHÂN VIÊN:
+${JSON.stringify(nhanVien)}
 
-        CÂU HỎI:
-        ${message}
+CÔNG VIỆC:
+${JSON.stringify(congViec)}
+
+TIN NHẮN:
+${message}
 `;
 
     const response = await genAI.models.generateContent({
+
+
       model: "gemini-2.5-flash",
+
       contents: prompt
+
     });
 
+    const aiText =
+      response.text ||
+      response.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "AI không phản hồi.";
+
     res.json({
-      reply: response.text
+      reply: aiText
     });
+
   } catch (error) {
+
     console.error("Lỗi /chat-ai:", error);
+
     res.status(500).json({
       reply: "Chatbot Gemini đang lỗi kết nối hoặc cấu hình."
     });
   }
 });
-
 const server = app.listen(3000, () => {
   console.log("Server chạy tại http://localhost:3000");
 });
