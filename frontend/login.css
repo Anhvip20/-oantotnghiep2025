@@ -23,6 +23,7 @@ body.login-page {
 .login-card {
     position: relative;
     z-index: 10;
+    width: min(420px, 100%);
     background: rgba(255, 255, 255, 0.95);
     padding: 40px 30px;
     border-radius: 20px;
@@ -141,4 +142,3 @@ button#loginBtn:hover {
         margin: 20px;
     }
 }
-    width: min(420px, 100%);
