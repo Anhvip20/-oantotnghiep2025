@@ -9,136 +9,92 @@
 </head>
 
 <body>
-
     <div class="app-layout">
-
         <aside class="sidebar">
-
             <div class="sidebar-logo">
                 <span class="menu-icon" id="toggleSidebar">☰</span>
                 <span>💼 Quản lý công việc</span>
             </div>
 
             <nav class="sidebar-menu">
-
-                <a href="dashboard.html" class="sidebar-link">
-                    🏠 Tổng quan
-                </a>
-
-                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">
-                    👥 Nhân viên
-                </a>
-
-                <a href="congviec.html" class="sidebar-link">
-                    📋 Công việc
-                </a>
-
-                <a href="chatbot.html" class="sidebar-link active">
-                    💬 Chatbot
-                </a>
-
+                <a href="dashboard.html" class="sidebar-link">🏠 Tổng quan</a>
+                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">👥 Nhân viên</a>
+                <a href="congviec.html" class="sidebar-link">📋 Công việc</a>
+                <a href="chatbot.html" class="sidebar-link active">💬 Chatbot</a>
             </nav>
 
             <div class="sidebar-section">
                 <p>TÀI KHOẢN</p>
-
-                <a href="taikhoan.html" class="sidebar-link">
-                    👤 Tài khoản
-                </a>
-
-                <button id="logoutBtn" class="sidebar-link sidebar-btn">
-                    ↪ Đăng xuất
-                </button>
+                <a href="taikhoan.html" class="sidebar-link">👤 Tài khoản</a>
+                <button id="logoutBtn" class="sidebar-link sidebar-btn">↪ Đăng xuất</button>
             </div>
-
         </aside>
 
         <main class="main-content">
-
             <div class="container">
-
                 <div class="card header-card">
-
                     <h1>Chatbot AI hỗ trợ công việc</h1>
-
-                    <p class="sub">
-                        Tra cứu thông tin và tóm tắt tình hình công việc
-                    </p>
+                    <p class="sub">Tra cứu thông tin, tóm tắt tiến độ và hỗ trợ quản lý công việc.</p>
 
                     <div class="info-box">
-                        <p>
-                            <strong>Người dùng:</strong>
-                            <span id="userInfo"></span>
-                        </p>
+                        <p><strong>Người dùng:</strong> <span id="userInfo"></span></p>
                     </div>
-
                 </div>
 
-                <div class="card chatbot-card">
+                <div class="chatbot-layout">
+                    <section class="card chatbot-card">
+                        <div class="chatbot-toolbar">
+                            <div>
+                                <h2>Trò chuyện với trợ lý AI</h2>
+                                <p>Hỏi về công việc, nhân viên, tiến độ, hạn hoàn thành hoặc yêu cầu tóm tắt.</p>
+                            </div>
 
-                    <h2>Trò chuyện với AI</h2>
-
-                    <div id="chatBox" class="chat-box"></div>
-
-                    <label for="chatInput">
-                        Nhập câu hỏi
-                    </label>
-
-                    <textarea id="chatInput" class="chat-input"
-                        placeholder="Ví dụ: Tóm tắt ngắn tình hình công việc hiện tại trong 5 dòng"></textarea>
-
-                    <div class="chat-actions">
-
-                        <button id="sendChatBtn">
-                            Gửi
-                        </button>
-
-                        <button id="clearChatBtn" class="secondary">
-                            Xóa hội thoại
-                        </button>
-
-                    </div>
-
-                    <div class="chat-suggestions">
-
-                        <h3>Gợi ý nhanh</h3>
-
-                        <div class="suggestion-list">
-
-                            <button class="suggest-btn">
-                                Tóm tắt ngắn tình hình công việc hiện tại trong 5 dòng
-                            </button>
-
-                            <button class="suggest-btn">
-                                Có bao nhiêu công việc đang làm
-                            </button>
-
-                            <button class="suggest-btn">
-                                Danh sách công việc
-                            </button>
-
-                            <button class="suggest-btn">
-                                Danh sách nhân viên
-                            </button>
-
-                            <button class="suggest-btn">
-                                Công việc chưa làm
-                            </button>
-
+                            <button id="clearChatBtn" class="secondary">Xóa hội thoại</button>
                         </div>
 
-                    </div>
+                        <div id="chatBox" class="chat-box"></div>
 
+                        <div class="chat-composer">
+                            <textarea id="chatInput" class="chat-input" maxlength="500"
+                                placeholder="Nhập câu hỏi, ví dụ: Công việc nào sắp đến hạn?"></textarea>
+
+                            <div class="composer-footer">
+                                <span id="chatHint"></span>
+                                <button id="sendChatBtn">Gửi</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <aside class="card chat-suggestions">
+                        <h3>Gợi ý nhanh</h3>
+
+                        <div class="suggestion-group">
+                            <span>Theo dõi tiến độ</span>
+                            <button class="suggest-btn">Tóm tắt tình hình công việc hiện tại</button>
+                            <button class="suggest-btn">Công việc nào sắp đến hạn?</button>
+                            <button class="suggest-btn">Công việc nào đang quá hạn?</button>
+                        </div>
+
+                        <div class="suggestion-group">
+                            <span>Tra cứu dữ liệu</span>
+                            <button class="suggest-btn">Danh sách công việc</button>
+                            <button class="suggest-btn">Danh sách nhân viên</button>
+                            <button class="suggest-btn">Có bao nhiêu công việc đang làm?</button>
+                        </div>
+
+                        <div class="suggestion-group">
+                            <span>Hỗ trợ phân công</span>
+                            <button class="suggest-btn">Nhân viên nào đang có nhiều việc?</button>
+                            <button class="suggest-btn">Nên ưu tiên xử lý công việc nào?</button>
+                        </div>
+                    </aside>
                 </div>
-
             </div>
-
         </main>
-
     </div>
 
+    <script src="ui-confirm.js"></script>
     <script src="chatbot.js"></script>
-
 </body>
 
 </html>

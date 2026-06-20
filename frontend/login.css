@@ -1,8 +1,16 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 body.login-page {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+    margin: 0;
+    padding: 20px;
     background: url('./assets/ảnh đăng nhập.jpg') no-repeat center center;
     background-size: cover;
     font-family: 'Poppins', sans-serif;
@@ -133,3 +141,4 @@ button#loginBtn:hover {
         margin: 20px;
     }
 }
+    width: min(420px, 100%);

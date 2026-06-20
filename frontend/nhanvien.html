@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản lý nhân viên</title>
     <link rel="stylesheet" href="nhanvien.css" />
+    <link rel="stylesheet" href="ai-assistant.css" />
 </head>
 
 <body>
@@ -74,21 +75,39 @@
 
                 </div>
 
-                <div class="card">
+                <div class="card toolbar-card">
 
-                    <label for="searchNhanVien">
-                        Tìm kiếm nhân viên
-                    </label>
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label for="searchNhanVien">
+                                Tìm kiếm nhân viên
+                            </label>
 
-                    <input type="text" id="searchNhanVien" placeholder="Nhập tên hoặc email..." />
+                            <input type="text" id="searchNhanVien" placeholder="Nhập tên, email hoặc số điện thoại..." />
+                        </div>
 
-                    <br><br>
+                        <div class="filter-field filter-status">
+                            <label for="workloadFilter">
+                                Lọc tải công việc
+                            </label>
 
-                    <button id="showAddNhanVienBtn" class="secondary">
+                            <select id="workloadFilter">
+                                <option value="all">Tất cả</option>
+                                <option value="free">Đang rảnh</option>
+                                <option value="normal">Bình thường</option>
+                                <option value="busy">Đang bận</option>
+                                <option value="overdue">Có việc quá hạn</option>
+                            </select>
+                        </div>
 
-                        Thêm nhân viên
+                        <div class="toolbar-action">
+                            <button id="showAddNhanVienBtn" class="secondary">
+                                Thêm nhân viên
+                            </button>
+                        </div>
+                    </div>
 
-                    </button>
+                    <p id="employeeSummary" class="filter-summary"></p>
 
                 </div>
 
@@ -107,6 +126,21 @@
                     </label>
 
                     <input type="email" id="emailNhanVien" placeholder="Nhập email" />
+
+                    <label for="soDienThoaiNhanVien">
+                        Số điện thoại
+                    </label>
+
+                    <input type="tel" id="soDienThoaiNhanVien" placeholder="Ví dụ: 0912345678" maxlength="10" />
+
+                    <label for="gioiTinhNhanVien">
+                        Giới tính
+                    </label>
+
+                    <select id="gioiTinhNhanVien">
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                    </select>
 
                     <label for="matkhauNhanVien">
                         Mật khẩu
@@ -132,9 +166,9 @@
                         Thêm nhân viên
                     </button>
 
-                    <button id="cancelNhanVienBtn" style="display:none;" class="secondary">
+                    <button id="cancelNhanVienBtn" class="secondary">
 
-                        Hủy sửa
+                        Đóng
 
                     </button>
 
@@ -156,6 +190,15 @@
 
     </div>
 
+    <a href="chatbot.html" class="ai-assistant-fab" aria-label="Mở trợ lý AI">
+        <span class="ai-assistant-text">
+            <small>AI</small>
+            <span>Assistant</span>
+        </span>
+        <span class="ai-assistant-icon">AI</span>
+    </a>
+
+    <script src="ui-confirm.js"></script>
     <script src="nhanvien.js"></script>
 
 </body>

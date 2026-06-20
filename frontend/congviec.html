@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quản lý công việc</title>
     <link rel="stylesheet" href="congviec.css" />
+    <link rel="stylesheet" href="ai-assistant.css" />
 </head>
 
 <body>
@@ -45,13 +46,31 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <label for="searchCongViec">Tìm kiếm công việc</label>
-                    <input type="text" id="searchCongViec" placeholder="Nhập tiêu đề công việc..." />
+                <div class="card toolbar-card">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label for="searchCongViec">Tìm kiếm công việc</label>
+                            <input type="text" id="searchCongViec" placeholder="Nhập tiêu đề công việc..." />
+                        </div>
 
-                    <br><br>
+                        <div class="filter-field filter-status">
+                            <label for="statusFilter">Lọc trạng thái</label>
+                            <select id="statusFilter">
+                                <option value="all">Tất cả</option>
+                                <option value="Chưa làm">Chưa làm</option>
+                                <option value="Đang làm">Đang làm</option>
+                                <option value="Chờ duyệt">Chờ duyệt</option>
+                                <option value="Hoàn thành">Hoàn thành</option>
+                                <option value="overdue">Quá hạn</option>
+                            </select>
+                        </div>
 
-                    <button id="showAddCongViecBtn" class="secondary">Thêm công việc</button>
+                        <div class="toolbar-action">
+                            <button id="showAddCongViecBtn" class="secondary">Thêm công việc</button>
+                        </div>
+                    </div>
+
+                    <p id="filterSummary" class="filter-summary"></p>
                 </div>
 
                 <div class="card" id="congViecFormCard" style="display:none;">
@@ -67,8 +86,12 @@
                     <select id="trangThai">
                         <option value="Chưa làm">Chuẩn bị làm</option>
                         <option value="Đang làm">Đang làm</option>
+                        <option value="Chờ duyệt">Chờ duyệt</option>
                         <option value="Hoàn thành">Hoàn thành</option>
                     </select>
+
+                    <label for="ngayGiao">Ngày giao</label>
+                    <input type="date" id="ngayGiao" />
 
                     <label for="han">Hạn</label>
                     <input type="date" id="han" />
@@ -94,6 +117,15 @@
 
     </div>
 
+    <a href="chatbot.html" class="ai-assistant-fab" aria-label="Mở trợ lý AI">
+        <span class="ai-assistant-text">
+            <small>AI</small>
+            <span>Assistant</span>
+        </span>
+        <span class="ai-assistant-icon">AI</span>
+    </a>
+
+    <script src="ui-confirm.js"></script>
     <script src="congviec.js"></script>
 </body>
 

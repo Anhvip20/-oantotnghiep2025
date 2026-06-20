@@ -6,35 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="dashboard.css" />
+    <link rel="stylesheet" href="ai-assistant.css" />
 </head>
 
 <body>
-
     <div class="app-layout">
-
         <aside class="sidebar">
-
             <div class="sidebar-logo">
                 <span class="menu-icon" id="toggleSidebar">☰</span>
                 <span>💼 Quản lý công việc</span>
             </div>
 
             <nav class="sidebar-menu">
-                <a href="dashboard.html" class="sidebar-link active">
-                    🏠 Tổng quan
-                </a>
-
-                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">
-                    👥 Nhân viên
-                </a>
-
-                <a href="congviec.html" class="sidebar-link">
-                    📋 Công việc
-                </a>
-
-                <a href="chatbot.html" class="sidebar-link">
-                    💬 Chatbot
-                </a>
+                <a href="dashboard.html" class="sidebar-link active">🏠 Tổng quan</a>
+                <a href="nhanvien.html" class="sidebar-link" id="navNhanVien">👥 Nhân viên</a>
+                <a href="congviec.html" class="sidebar-link">📋 Công việc</a>
+                <a href="chatbot.html" class="sidebar-link">💬 Chatbot</a>
             </nav>
 
             <div class="sidebar-section">
@@ -42,121 +29,179 @@
 
                 <div class="sidebar-link notification-sidebar">
                     🔔 Thông báo
-                    <span id="notificationCount">0</span>
+                    <span id="notificationCount" class="empty">0</span>
                 </div>
 
                 <div id="notificationDropdown" class="notification-dropdown">
-
                     <div class="notification-header">
                         <h3>Thông báo</h3>
-
-                        <button id="closeNotificationBtn" class="close-notification-btn">
-                            ✖
-                        </button>
+                        <button id="closeNotificationBtn" class="close-notification-btn">✖</button>
                     </div>
 
                     <div id="notificationList"></div>
-
                 </div>
             </div>
 
             <div class="sidebar-section">
                 <p>TÀI KHOẢN</p>
-
-                <a href="taikhoan.html" class="sidebar-link">
-                    👤 Tài khoản
-                </a>
-
-                <button id="logoutBtn" class="sidebar-link sidebar-btn">
-                    ↪ Đăng xuất
-                </button>
+                <a href="taikhoan.html" class="sidebar-link">👤 Tài khoản</a>
+                <button id="logoutBtn" class="sidebar-link sidebar-btn">↪ Đăng xuất</button>
             </div>
-
         </aside>
 
         <main class="main-content">
-
-            <div class="container">
-
-                <div class="card header-card">
-
-                    <h1>Dashboard</h1>
-
-                    <p class="sub">
-                        Hệ thống quản lý công việc văn phòng
-                    </p>
-
-                    <div class="info-box">
-                        <p>
-                            <strong>Người dùng:</strong>
-                            <span id="userInfo"></span>
-                        </p>
+            <div class="container dashboard-container">
+                <section class="dashboard-hero">
+                    <div>
+                        <p class="eyebrow">Tổng quan hệ thống</p>
+                        <h1>Xin chào, <span id="dashboardUserName">người dùng</span></h1>
+                        <p class="sub">Theo dõi công việc, hiệu suất nhân viên và báo cáo tiến độ.</p>
                     </div>
 
-                </div>
+                    <div class="hero-actions">
+                        <a href="congviec.html" class="primary-action">+ Tạo công việc mới</a>
+                    </div>
+                </section>
 
-                <div class="grid">
-
-                    <div class="card" id="tongNhanVienCard">
-                        <h2>
-                            <span class="card-icon">👥</span>
-                            Tổng nhân viên
-                        </h2>
-
-                        <p class="big-number" id="tongNhanVien">0</p>
+                <section class="grid stats-grid">
+                    <div class="card stat-card" id="tongNhanVienCard">
+                        <div class="stat-icon">👥</div>
+                        <div>
+                            <span class="stat-label">Tổng nhân viên</span>
+                            <p class="big-number" id="tongNhanVien">0</p>
+                        </div>
                     </div>
 
-                    <div class="card">
-                        <h2>
-                            <span class="card-icon">📋</span>
-                            Tổng công việc
-                        </h2>
-
-                        <p class="big-number" id="tongCongViec">0</p>
+                    <div class="card stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div>
+                            <span class="stat-label">Tổng công việc</span>
+                            <p class="big-number" id="tongCongViec">0</p>
+                        </div>
                     </div>
 
-                    <div class="card">
-                        <h2>
-                            <span class="card-icon">⏳</span>
-                            Đang làm
-                        </h2>
-
-                        <p class="big-number" id="dangLam">0</p>
+                    <div class="card stat-card success">
+                        <div class="stat-icon">✅</div>
+                        <div>
+                            <span class="stat-label">Hoàn thành</span>
+                            <p class="big-number" id="hoanThanh">0</p>
+                        </div>
                     </div>
 
-                </div>
-
-                <div class="grid bottom-grid">
-
-                    <div class="card" id="nhanVienMoiCard">
-
-                        <h2>Nhân viên mới nhất</h2>
-
-                        <div id="nhanVienMoi" class="list-box"></div>
-
+                    <div class="card stat-card danger">
+                        <div class="stat-icon">⚠️</div>
+                        <div>
+                            <span class="stat-label">Quá hạn</span>
+                            <p class="big-number" id="quaHan">0</p>
+                        </div>
                     </div>
 
-                    <div class="card" id="congViecCuaToiCard">
+                    <div class="card stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div>
+                            <span class="stat-label">Tỷ lệ hoàn thành</span>
+                            <p class="big-number" id="tiLeHoanThanh">0%</p>
+                        </div>
+                    </div>
+                </section>
 
-                        <h2 id="taskTitle">
-                            Công việc của tôi
-                        </h2>
+                <section class="dashboard-shell">
+                    <div class="dashboard-main">
+                        <section class="dashboard-grid">
+                            <div class="card">
+                                <div class="section-title">
+                                    <h2>Tổng quan công việc</h2>
+                                    <span id="completionRate">0% hoàn thành</span>
+                                </div>
 
-                        <div id="congViecCuaToi" class="list-box"></div>
+                                <div id="statusSummary" class="status-summary"></div>
+                            </div>
 
+                            <div class="card">
+                                <div class="section-title">
+                                    <h2>Báo cáo theo thời gian</h2>
+                                    <select id="reportPeriod" class="period-select">
+                                        <option value="month">Theo tháng</option>
+                                        <option value="quarter">Theo quý</option>
+                                        <option value="year">Theo năm</option>
+                                    </select>
+                                </div>
+
+                                <div class="report-summary">
+                                    <div>
+                                        <span>Tổng việc</span>
+                                        <strong id="reportTotal">0</strong>
+                                    </div>
+                                    <div>
+                                        <span>Hoàn thành</span>
+                                        <strong id="reportDone">0</strong>
+                                    </div>
+                                    <div>
+                                        <span>Quá hạn</span>
+                                        <strong id="reportLate">0</strong>
+                                    </div>
+                                </div>
+
+                                <div id="timeReportChart" class="time-chart"></div>
+                            </div>
+                        </section>
+
+                        <section class="dashboard-grid">
+                            <div class="card" id="performanceCard">
+                                <div class="section-title">
+                                    <h2>Hiệu suất nhân viên</h2>
+                                    <span>Dựa trên tỷ lệ hoàn thành</span>
+                                </div>
+
+                                <div id="performanceList" class="performance-list"></div>
+                            </div>
+
+                            <div class="card" id="workloadCard">
+                                <div class="section-title">
+                                    <h2>Tải công việc nhân viên</h2>
+                                    <span>Việc chưa hoàn thành</span>
+                                </div>
+
+                                <div id="workloadList" class="workload-list"></div>
+                            </div>
+                        </section>
                     </div>
 
-                </div>
+                    <aside class="dashboard-side">
+                        <div class="card side-card">
+                            <div class="section-title">
+                                <h2 id="taskTitle">Công việc ưu tiên</h2>
+                                <span id="priorityTaskCount">0 việc</span>
+                            </div>
 
+                            <div id="congViecCuaToi" class="list-box compact-list"></div>
+                        </div>
+
+                        <div class="card side-card">
+                            <div class="section-title">
+                                <h2>Cảnh báo cần chú ý</h2>
+                                <span id="alertCount">0 mục</span>
+                            </div>
+
+                            <div id="priorityAlerts" class="list-box compact-list"></div>
+                        </div>
+
+                    </aside>
+                </section>
             </div>
-
         </main>
-
     </div>
 
-    <script src="dashboard.js"></script>
+    <a href="chatbot.html" class="ai-assistant-fab" aria-label="Mở trợ lý AI">
+        <span class="ai-assistant-text">
+            <small>AI</small>
+            <span>Assistant</span>
+        </span>
+        <span class="ai-assistant-icon">AI</span>
+    </a>
 
+    <script src="ui-confirm.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 
 </html>
-```

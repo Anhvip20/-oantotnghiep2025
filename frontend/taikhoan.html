@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tài khoản</title>
     <link rel="stylesheet" href="taikhoan.css" />
+    <link rel="stylesheet" href="ai-assistant.css" />
 </head>
 
 <body>
@@ -48,6 +49,8 @@
                         <p><strong>ID:</strong> <span id="userId"></span></p>
                         <p><strong>Họ tên:</strong> <span id="userTen"></span></p>
                         <p><strong>Email:</strong> <span id="userEmail"></span></p>
+                        <p><strong>Số điện thoại:</strong> <span id="userPhone"></span></p>
+                        <p><strong>Giới tính:</strong> <span id="userGender"></span></p>
                         <p><strong>Vai trò:</strong> <span id="userRole"></span></p>
                     </div>
 
@@ -59,6 +62,15 @@
 
     </div>
 
+    <a href="chatbot.html" class="ai-assistant-fab" aria-label="Mở trợ lý AI">
+        <span class="ai-assistant-text">
+            <small>AI</small>
+            <span>Assistant</span>
+        </span>
+        <span class="ai-assistant-icon">AI</span>
+    </a>
+
+    <script src="ui-confirm.js"></script>
     <script src="taikhoan.js"></script>
 </body>
 

@@ -22,10 +22,26 @@ document.getElementById("userTen").textContent =
 document.getElementById("userEmail").textContent =
     user.email || "";
 
+document.getElementById("userPhone").textContent =
+    user.soDienThoai || "Chưa cập nhật";
+
+document.getElementById("userGender").textContent =
+    user.gioiTinh || "Chưa cập nhật";
+
 document.getElementById("userRole").textContent =
     user.role || "";
 
-function logout() {
+async function logout() {
+    const ok = await showConfirmDialog({
+        title: "Đăng xuất tài khoản?",
+        message: "Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng hệ thống.",
+        confirmText: "Đăng xuất",
+        cancelText: "Ở lại",
+        type: "danger"
+    });
+
+    if (!ok) return;
+
     localStorage.removeItem("user");
     window.location.href = "login.html";
 }

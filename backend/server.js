@@ -12,6 +12,88 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+async function ghiLichSuCongViec(pool, congViecId, nhanVienId, hanhDong, noiDung) {
+  await pool
+    .request()
+    .input("congViecId", sql.Int, congViecId)
+    .input("nhanVienId", sql.Int, nhanVienId || null)
+    .input("hanhDong", sql.NVarChar, hanhDong)
+    .input("noiDung", sql.NVarChar, noiDung)
+    .query(`
+      INSERT INTO LichSuCongViec (
+        congViecId,
+        nhanVienId,
+        hanhDong,
+        noiDung
+      )
+      VALUES (
+        @congViecId,
+        @nhanVienId,
+        @hanhDong,
+        @noiDung
+      )
+    `);
+}
+
+function isValidEmail(email) {
+  const value = String(email || "").trim().toLowerCase();
+  const allowedTlds = new Set([
+    "com",
+    "vn",
+    "com.vn",
+    "edu.vn",
+    "gov.vn",
+    "net",
+    "org",
+    "info",
+    "io",
+    "co",
+    "me",
+    "dev",
+    "ai",
+    "app"
+  ]);
+
+  if (!/^[a-z0-9._%+-]+@([a-z0-9-]+\.)+[a-z]{2,}$/.test(value)) {
+    return false;
+  }
+
+  const [local, domain] = value.split("@");
+
+  if (!local || !domain || local.includes("..") || domain.includes("..")) {
+    return false;
+  }
+
+  const labels = domain.split(".");
+
+  if (labels.some(label =>
+    !label
+    || label.startsWith("-")
+    || label.endsWith("-")
+  )) {
+    return false;
+  }
+
+  const lastTwoLabels = labels.slice(-2).join(".");
+  const lastLabel = labels[labels.length - 1];
+
+  return allowedTlds.has(lastTwoLabels) || allowedTlds.has(lastLabel);
+}
+
+function isValidName(name) {
+  const normalizedName = String(name || "").trim().replace(/\s+/g, " ");
+
+  return normalizedName.length >= 2
+    && normalizedName.length <= 80
+    && /^[A-Za-zÀ-ỹ\s'-]+$/.test(normalizedName);
+}
+
+function isValidPhone(phone) {
+  const value = String(phone || "").trim();
+
+  return /^(03|05|07|08|09)\d{8}$/.test(value);
+}
+
 app.get("/", (req, res) => {
   res.send("Server đang chạy ");
 });
@@ -114,14 +196,17 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
 
     const pool = await connectDB();
 
-    // lấy thông báo hiện tại
     const thongBaoResult = await pool.request()
       .input("id", sql.Int, id)
       .query(`
-                SELECT *
-                FROM ThongBao
-                WHERE id = @id
-            `);
+        SELECT
+          tb.*,
+          nv.ten AS tenNhanVien
+        FROM ThongBao tb
+        LEFT JOIN NhanVien nv
+          ON tb.nhanVienId = nv.id
+        WHERE tb.id = @id
+      `);
 
     if (thongBaoResult.recordset.length === 0) {
 
@@ -133,46 +218,36 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
     const thongBao =
       thongBaoResult.recordset[0];
 
-    // cập nhật đã đọc
     await pool.request()
       .input("id", sql.Int, id)
       .query(`
-                UPDATE ThongBao_Read
-                SET
-                    DaDoc = 1,
-                    ThoiGianDoc = GETDATE()
-                WHERE ThongBaoId = @id
-            `);
+        UPDATE ThongBao
+        SET daDoc = 1
+        WHERE id = @id
+      `);
 
-    // lấy nhân viên đã đọc
-    const nhanVienResult = await pool.request()
-      .input("nhanVienId", sql.Int, thongBao.nhanVienId)
-      .query(`
-                SELECT ten
-                FROM NhanVien
-                WHERE id = @nhanVienId
-            `);
+    const adminResult =
+      await pool.request().query(`
+        SELECT id
+        FROM NhanVien
+        WHERE role = 'admin'
+      `);
 
-    const tenNhanVien =
-      nhanVienResult.recordset[0]?.ten ||
-      "Nhân viên";
+    if (
+      thongBao.noiDung.includes("đã đọc thông báo")
+    ) {
 
-    // tìm admin
-    const adminResult = await pool.request()
-      .query(`
-                SELECT id
-                FROM NhanVien
-                WHERE role = 'admin'
-            `);
-
-    // tạo thông báo cho admin
+      return res.json({
+        message: "Đã đánh dấu đã đọc"
+      });
+    }
     for (const admin of adminResult.recordset) {
 
       await pool.request()
         .input(
           "noiDung",
           sql.NVarChar,
-          `${tenNhanVien} đã đọc thông báo: "${thongBao.noiDung}"`
+          `${thongBao.tenNhanVien || "Nhân viên"} đã đọc thông báo: "${thongBao.noiDung}"`
         )
         .input(
           "nhanVienId",
@@ -180,15 +255,15 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
           admin.id
         )
         .query(`
-                    INSERT INTO ThongBao (
-                        noiDung,
-                        nhanVienId
-                    )
-                    VALUES (
-                        @noiDung,
-                        @nhanVienId
-                    )
-                `);
+          INSERT INTO ThongBao (
+            noiDung,
+            nhanVienId
+          )
+          VALUES (
+            @noiDung,
+            @nhanVienId
+          )
+        `);
     }
 
     res.json({
@@ -197,7 +272,10 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
 
   } catch (error) {
 
-    console.error(error);
+    console.error(
+      "Lỗi PUT /thongbao/dadoc/:id:",
+      error.message
+    );
 
     res.status(500).json({
       message: "Lỗi server"
@@ -209,6 +287,13 @@ app.put("/thongbao/dadoc/:id", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, matkhau } = req.body;
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        message: "Email không đúng định dạng"
+      });
+    }
+
     const pool = await connectDB();
 
     const result = await pool
@@ -216,7 +301,7 @@ app.post("/login", async (req, res) => {
       .input("email", sql.NVarChar, email)
       .input("matkhau", sql.NVarChar, matkhau)
       .query(`
-        SELECT id, ten, email, role
+        SELECT id, ten, email, soDienThoai, gioiTinh, role
         FROM NhanVien
         WHERE email = @email AND matkhau = @matkhau
       `);
@@ -237,12 +322,41 @@ app.post("/login", async (req, res) => {
 
 app.post("/nhanvien", async (req, res) => {
   try {
-    const { ten, email, matkhau, role } = req.body;
+    const { ten, email, soDienThoai, gioiTinh, matkhau, role } = req.body;
+    const cleanTen = String(ten || "").trim().replace(/\s+/g, " ");
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanPhone = String(soDienThoai || "").trim();
+    const cleanGender = String(gioiTinh || "").trim();
+
+    if (!isValidName(cleanTen)) {
+      return res.status(400).json({
+        message: "Tên nhân viên chỉ được chứa chữ cái, khoảng trắng, dấu gạch nối hoặc dấu nháy"
+      });
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        message: "Email không đúng định dạng"
+      });
+    }
+
+    if (!isValidPhone(cleanPhone)) {
+      return res.status(400).json({
+        message: "Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08 hoặc 09"
+      });
+    }
+
+    if (!["Nam", "Nữ"].includes(cleanGender)) {
+      return res.status(400).json({
+        message: "Giới tính không hợp lệ"
+      });
+    }
+
     const pool = await connectDB();
 
     const check = await pool
       .request()
-      .input("email", sql.NVarChar, email)
+      .input("email", sql.NVarChar, cleanEmail)
       .query("SELECT * FROM NhanVien WHERE email = @email");
 
     if (check.recordset.length > 0) {
@@ -251,13 +365,15 @@ app.post("/nhanvien", async (req, res) => {
 
     await pool
       .request()
-      .input("ten", sql.NVarChar, ten)
-      .input("email", sql.NVarChar, email)
+      .input("ten", sql.NVarChar, cleanTen)
+      .input("email", sql.NVarChar, cleanEmail)
+      .input("soDienThoai", sql.NVarChar, cleanPhone)
+      .input("gioiTinh", sql.NVarChar, cleanGender)
       .input("matkhau", sql.NVarChar, matkhau)
       .input("role", sql.NVarChar, role || "staff")
       .query(`
-        INSERT INTO NhanVien (ten, email, matkhau, role)
-        VALUES (@ten, @email, @matkhau, @role)
+        INSERT INTO NhanVien (ten, email, soDienThoai, gioiTinh, matkhau, role)
+        VALUES (@ten, @email, @soDienThoai, @gioiTinh, @matkhau, @role)
       `);
 
     res.json({ message: "Thêm nhân viên thành công" });
@@ -276,15 +392,46 @@ app.put("/nhanvien/:id", async (req, res) => {
     const {
       ten,
       email,
+      soDienThoai,
+      gioiTinh,
       matkhau,
       role
     } = req.body;
+
+    const cleanTen = String(ten || "").trim().replace(/\s+/g, " ");
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    const cleanPhone = String(soDienThoai || "").trim();
+    const cleanGender = String(gioiTinh || "").trim();
+
+    if (!isValidName(cleanTen)) {
+      return res.status(400).json({
+        message: "Tên nhân viên chỉ được chứa chữ cái, khoảng trắng, dấu gạch nối hoặc dấu nháy"
+      });
+    }
+
+    if (!isValidEmail(cleanEmail)) {
+      return res.status(400).json({
+        message: "Email không đúng định dạng"
+      });
+    }
+
+    if (!isValidPhone(cleanPhone)) {
+      return res.status(400).json({
+        message: "Số điện thoại phải có 10 số và bắt đầu bằng 03, 05, 07, 08 hoặc 09"
+      });
+    }
+
+    if (!["Nam", "Nữ"].includes(cleanGender)) {
+      return res.status(400).json({
+        message: "Giới tính không hợp lệ"
+      });
+    }
 
     const pool = await connectDB();
 
     const check = await pool
       .request()
-      .input("email", sql.NVarChar, email)
+      .input("email", sql.NVarChar, cleanEmail)
       .input("id", sql.Int, id)
       .query(`
         SELECT *
@@ -303,8 +450,10 @@ app.put("/nhanvien/:id", async (req, res) => {
     await pool
       .request()
       .input("id", sql.Int, id)
-      .input("ten", sql.NVarChar, ten)
-      .input("email", sql.NVarChar, email)
+      .input("ten", sql.NVarChar, cleanTen)
+      .input("email", sql.NVarChar, cleanEmail)
+      .input("soDienThoai", sql.NVarChar, cleanPhone)
+      .input("gioiTinh", sql.NVarChar, cleanGender)
       .input("matkhau", sql.NVarChar, matkhau)
       .input("role", sql.NVarChar, role)
       .query(`
@@ -312,6 +461,8 @@ app.put("/nhanvien/:id", async (req, res) => {
         SET
           ten = @ten,
           email = @email,
+          soDienThoai = @soDienThoai,
+          gioiTinh = @gioiTinh,
           matkhau = @matkhau,
           role = @role
         WHERE id = @id
@@ -334,39 +485,7 @@ app.put("/nhanvien/:id", async (req, res) => {
   }
 });
 
-app.put("/thongbao/dadoc/:id", async (req, res) => {
 
-  try {
-
-    const { id } = req.params;
-
-    const pool = await connectDB();
-
-    await pool
-      .request()
-      .input("id", sql.Int, id)
-      .query(`
-        UPDATE ThongBao
-        SET daDoc = 1
-        WHERE id = @id
-      `);
-
-    res.json({
-      message: "Đã cập nhật thông báo"
-    });
-
-  } catch (error) {
-
-    console.error(
-      "Lỗi PUT /thongbao/dadoc/:id:",
-      error.message
-    );
-
-    res.status(500).json({
-      error: error.message
-    });
-  }
-});
 
 app.delete("/nhanvien/:id", async (req, res) => {
   try {
@@ -403,82 +522,291 @@ app.delete("/nhanvien/:id", async (req, res) => {
 app.put("/congviec/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { tieuDe, moTa, trangThai, han, nhanVienId } = req.body;
+    const { tieuDe, moTa, trangThai, ngayGiao, han, nhanVienId, nguoiThucHienId } = req.body;
+
     const pool = await connectDB();
+
     const oldTask = await pool
       .request()
       .input("id", sql.Int, id)
       .query(`
-          SELECT *
-          FROM CongViec
-          WHERE id = @id
-        `)
+        SELECT *
+        FROM CongViec
+        WHERE id = @id
+      `);
+
+    if (oldTask.recordset.length === 0) {
+      return res.status(404).json({
+        message: "Không tìm thấy công việc"
+      });
+    }
+
     const cvCu = oldTask.recordset[0];
-    let noiDungThongBao = "";
 
-    // đổi tên công việc
+    const oldNhanVienId = cvCu.nhanVienId;
+    const newNhanVienId = nhanVienId;
+
+    const thongBaoList = [];
+    const lichSuList = [];
+
     if (cvCu.tieuDe !== tieuDe) {
-
-      noiDungThongBao =
-        `Tên công việc đã đổi từ "${cvCu.tieuDe}" thành "${tieuDe}"`;
+      thongBaoList.push(
+        `Tên công việc đã đổi từ "${cvCu.tieuDe}" thành "${tieuDe}"`
+      );
+      lichSuList.push(
+        `Đổi tiêu đề từ "${cvCu.tieuDe}" thành "${tieuDe}"`
+      );
     }
 
-    // đổi trạng thái
-    else if (cvCu.trangThai !== trangThai) {
-
-      noiDungThongBao =
-        `Công việc "${tieuDe}" đã cập nhật trạng thái: ${trangThai}`;
+    if ((cvCu.moTa || "") !== (moTa || "")) {
+      thongBaoList.push(
+        `Mô tả công việc "${tieuDe}" đã được cập nhật`
+      );
+      lichSuList.push(
+        `Cập nhật mô tả công việc "${tieuDe}"`
+      );
     }
 
-    // đổi hạn
-    else if (
-      String(cvCu.han).split("T")[0] !==
-      String(han).split("T")[0]
+    if (cvCu.trangThai !== trangThai) {
+      thongBaoList.push(
+        `Công việc "${tieuDe}" đã cập nhật trạng thái: ${trangThai}`
+      );
+      lichSuList.push(
+        `Đổi trạng thái từ "${cvCu.trangThai}" sang "${trangThai}"`
+      );
+    }
+
+    if (
+      String(cvCu.ngayGiao || "").split("T")[0] !==
+      String(ngayGiao || "").split("T")[0]
     ) {
-
-      noiDungThongBao =
-        `Công việc "${tieuDe}" đã đổi hạn sang ${han}`;
+      lichSuList.push(
+        `Đổi ngày giao từ ${cvCu.ngayGiao ? new Date(cvCu.ngayGiao).toISOString().split("T")[0] : "chưa có"} sang ${ngayGiao}`
+      );
     }
 
-    // đổi nhân viên
-    else if (cvCu.nhanVienId != nhanVienId) {
-
-      noiDungThongBao =
-        `Bạn được giao công việc mới: "${tieuDe}"`;
+    if (
+      String(cvCu.han || "").split("T")[0] !==
+      String(han || "").split("T")[0]
+    ) {
+      thongBaoList.push(
+        `Công việc "${tieuDe}" đã đổi hạn từ ${cvCu.han || "chưa có"} sang ${han}`
+      );
+      lichSuList.push(
+        `Đổi hạn từ ${cvCu.han ? new Date(cvCu.han).toISOString().split("T")[0] : "chưa có"} sang ${han}`
+      );
     }
+
+    if (oldNhanVienId != newNhanVienId) {
+      thongBaoList.push(
+        `Bạn được giao công việc: "${tieuDe}"`
+      );
+      lichSuList.push(
+        `Đổi nhân viên phụ trách từ ID ${oldNhanVienId || "chưa có"} sang ID ${newNhanVienId}`
+      );
+    }
+
     await pool
       .request()
       .input("id", sql.Int, id)
       .input("tieuDe", sql.NVarChar, tieuDe)
       .input("moTa", sql.NVarChar, moTa)
       .input("trangThai", sql.NVarChar, trangThai)
-      .input("han", sql.NVarChar, han)
+      .input("ngayGiao", sql.Date, ngayGiao)
+      .input("han", sql.Date, han)
       .input("nhanVienId", sql.Int, nhanVienId)
       .query(`
         UPDATE CongViec
-        SET tieuDe = @tieuDe,
-            moTa = @moTa,
-            trangThai = @trangThai,
-            han = @han,
-            nhanVienId = @nhanVienId
+        SET
+          tieuDe = @tieuDe,
+          moTa = @moTa,
+          trangThai = @trangThai,
+          ngayGiao = @ngayGiao,
+          han = @han,
+          nhanVienId = @nhanVienId
         WHERE id = @id
       `);
 
-    if (noiDungThongBao !== "") {
+    if (thongBaoList.length > 0) {
+      for (const noiDung of thongBaoList) {
+        await pool
+          .request()
+          .input("noiDung", sql.NVarChar, noiDung)
+          .input("nhanVienId", sql.Int, newNhanVienId)
+          .query(`
+            INSERT INTO ThongBao (noiDung, nhanVienId)
+            VALUES (@noiDung, @nhanVienId)
+          `);
+      }
+    }
 
-      await pool
-        .request()
-        .input("noiDung", sql.NVarChar, noiDungThongBao)
-        .input("nhanVienId", sql.Int, nhanVienId)
-        .query(`
+    for (const noiDung of lichSuList) {
+      await ghiLichSuCongViec(
+        pool,
+        id,
+        nguoiThucHienId || null,
+        "Sửa công việc",
+        noiDung
+      );
+    }
+
+    res.json({
+      message: "Cập nhật công việc thành công"
+    });
+
+  } catch (error) {
+    console.error("Lỗi PUT /congviec/:id:", error.message);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+app.get("/congviec/:id/lichsu", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await connectDB();
+
+    const result = await pool
+      .request()
+      .input("congViecId", sql.Int, id)
+      .query(`
+        SELECT
+          ls.id,
+          ls.congViecId,
+          ls.nhanVienId,
+          ls.hanhDong,
+          ls.noiDung,
+          ls.thoiGian,
+          nv.ten AS tenNhanVien
+        FROM LichSuCongViec ls
+        LEFT JOIN NhanVien nv
+          ON ls.nhanVienId = nv.id
+        WHERE ls.congViecId = @congViecId
+        ORDER BY ls.thoiGian DESC, ls.id DESC
+      `);
+
+    res.json(result.recordset);
+  } catch (error) {
+    console.error("Lỗi GET /congviec/:id/lichsu:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put("/congviec/:id/trangthai", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { trangThai, nhanVienId } = req.body;
+
+    const trangThaiHopLe = ["Chưa làm", "Đang làm", "Chờ duyệt"];
+
+    if (!trangThaiHopLe.includes(trangThai)) {
+      return res.status(400).json({
+        message: "Trạng thái công việc không hợp lệ"
+      });
+    }
+
+    const pool = await connectDB();
+
+    const taskResult = await pool
+      .request()
+      .input("id", sql.Int, id)
+      .query(`
+        SELECT id, tieuDe, trangThai, han, nhanVienId
+        FROM CongViec
+        WHERE id = @id
+      `);
+
+    if (taskResult.recordset.length === 0) {
+      return res.status(404).json({
+        message: "Không tìm thấy công việc"
+      });
+    }
+
+    const task = taskResult.recordset[0];
+
+    if (String(task.nhanVienId) !== String(nhanVienId)) {
+      return res.status(403).json({
+        message: "Bạn không có quyền cập nhật công việc này"
+      });
+    }
+
+    if (task.han && task.trangThai !== "Hoàn thành") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const deadline = new Date(task.han);
+      deadline.setHours(0, 0, 0, 0);
+
+      if (deadline < today) {
+        return res.status(403).json({
+          message: "Công việc đã quá hạn, nhân viên không thể cập nhật trạng thái"
+        });
+      }
+    }
+
+    await pool
+      .request()
+      .input("id", sql.Int, id)
+      .input("trangThai", sql.NVarChar, trangThai)
+      .query(`
+        UPDATE CongViec
+        SET trangThai = @trangThai
+        WHERE id = @id
+      `);
+
+    await ghiLichSuCongViec(
+      pool,
+      id,
+      nhanVienId,
+      "Cập nhật trạng thái",
+      `Đổi trạng thái từ "${task.trangThai}" sang "${trangThai}"`
+    );
+
+    await pool
+      .request()
+      .input(
+        "noiDung",
+        sql.NVarChar,
+        `Nhân viên đã cập nhật trạng thái công việc "${task.tieuDe}" thành: ${trangThai}`
+      )
+      .input("nhanVienId", sql.Int, nhanVienId)
+      .query(`
         INSERT INTO ThongBao (noiDung, nhanVienId)
         VALUES (@noiDung, @nhanVienId)
       `);
+
+    if (trangThai === "Chờ duyệt") {
+      const adminResult = await pool
+        .request()
+        .query(`
+          SELECT id
+          FROM NhanVien
+          WHERE role = 'admin'
+        `);
+
+      for (const admin of adminResult.recordset) {
+        await pool
+          .request()
+          .input(
+            "noiDung",
+            sql.NVarChar,
+            `Công việc "${task.tieuDe}" đang chờ quản lý duyệt hoàn thành`
+          )
+          .input("nhanVienId", sql.Int, admin.id)
+          .query(`
+            INSERT INTO ThongBao (noiDung, nhanVienId)
+            VALUES (@noiDung, @nhanVienId)
+          `);
+      }
     }
 
-    res.json({ message: "Cập nhật công việc thành công" });
+    res.json({
+      message: "Cập nhật trạng thái công việc thành công"
+    });
   } catch (error) {
-    console.error("Lỗi PUT /congviec/:id:", error.message);
+    console.error("Lỗi PUT /congviec/:id/trangthai:", error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -502,20 +830,33 @@ app.delete("/congviec/:id", async (req, res) => {
 
 app.post("/congviec", async (req, res) => {
   try {
-    const { tieuDe, moTa, trangThai, han, nhanVienId } = req.body;
+    const { tieuDe, moTa, trangThai, ngayGiao, han, nhanVienId, nguoiThucHienId } = req.body;
     const pool = await connectDB();
 
-    await pool
+    const insertResult = await pool
       .request()
       .input("tieuDe", sql.NVarChar, tieuDe)
       .input("moTa", sql.NVarChar, moTa)
       .input("trangThai", sql.NVarChar, trangThai)
-      .input("han", sql.NVarChar, han)
+      .input("ngayGiao", sql.Date, ngayGiao)
+      .input("han", sql.Date, han)
       .input("nhanVienId", sql.Int, nhanVienId)
       .query(`
-        INSERT INTO CongViec (tieuDe, moTa, trangThai, han, nhanVienId)
-        VALUES (@tieuDe, @moTa, @trangThai, @han, @nhanVienId)
+        INSERT INTO CongViec (tieuDe, moTa, trangThai, ngayGiao, han, nhanVienId)
+        OUTPUT INSERTED.id
+        VALUES (@tieuDe, @moTa, @trangThai, @ngayGiao, @han, @nhanVienId)
       `);
+
+    const congViecId = insertResult.recordset[0].id;
+
+    await ghiLichSuCongViec(
+      pool,
+      congViecId,
+      nguoiThucHienId || null,
+      "Tạo công việc",
+      `Tạo công việc "${tieuDe}" giao ngày ${ngayGiao}, hạn ${han}, cho nhân viên ID ${nhanVienId}`
+    );
+
     await pool
       .request()
       .input(
@@ -600,7 +941,7 @@ app.post("/chat", async (req, res) => {
 
     if (text.includes("liệt kê nhân viên") || text.includes("danh sách nhân viên")) {
       const result = await pool.request().query(`
-        SELECT ten, email
+        SELECT ten, email, soDienThoai, gioiTinh
         FROM NhanVien
         WHERE role = 'staff'
         ORDER BY id DESC
@@ -611,7 +952,9 @@ app.post("/chat", async (req, res) => {
       }
 
       const ds = result.recordset
-        .map((item, index) => `${index + 1}. ${item.ten} - ${item.email}`)
+        .map((item, index) =>
+          `${index + 1}. ${item.ten} - ${item.email} - ${item.soDienThoai || "chưa có số điện thoại"}`
+        )
         .join("\n");
 
       return res.json({
@@ -622,7 +965,7 @@ app.post("/chat", async (req, res) => {
 
     if (text.includes("liệt kê công việc") || text.includes("danh sách công việc")) {
       const result = await pool.request().query(`
-        SELECT TOP 10 cv.tieuDe, cv.trangThai, nv.ten AS tenNhanVien
+        SELECT TOP 10 cv.tieuDe, cv.trangThai, cv.ngayGiao, cv.han, nv.ten AS tenNhanVien
         FROM CongViec cv
         LEFT JOIN NhanVien nv ON cv.nhanVienId = nv.id
         ORDER BY cv.id DESC
@@ -633,7 +976,7 @@ app.post("/chat", async (req, res) => {
       }
 
       const ds = result.recordset
-        .map((item, index) => `${index + 1}. ${item.tieuDe} - ${item.trangThai} - ${item.tenNhanVien || "Chưa gán"}`)
+        .map((item, index) => `${index + 1}. ${item.tieuDe} - ${item.trangThai} - giao: ${item.ngayGiao ? new Date(item.ngayGiao).toISOString().split("T")[0] : ""} - hạn: ${item.han ? new Date(item.han).toISOString().split("T")[0] : ""} - ${item.tenNhanVien || "Chưa gán"}`)
         .join("\n");
 
       return res.json({
@@ -649,7 +992,7 @@ app.post("/chat", async (req, res) => {
         .request()
         .input("ten", sql.NVarChar, `%${tenNhanVien}%`)
         .query(`
-          SELECT cv.tieuDe, cv.trangThai, cv.han, nv.ten AS tenNhanVien
+          SELECT cv.tieuDe, cv.trangThai, cv.ngayGiao, cv.han, nv.ten AS tenNhanVien
           FROM CongViec cv
           LEFT JOIN NhanVien nv ON cv.nhanVienId = nv.id
           WHERE nv.ten LIKE @ten
@@ -663,7 +1006,7 @@ app.post("/chat", async (req, res) => {
       }
 
       const ds = result.recordset
-        .map((item, index) => `${index + 1}. ${item.tieuDe} - ${item.trangThai} - hạn: ${item.han ? new Date(item.han).toISOString().split("T")[0] : ""}`)
+        .map((item, index) => `${index + 1}. ${item.tieuDe} - ${item.trangThai} - giao: ${item.ngayGiao ? new Date(item.ngayGiao).toISOString().split("T")[0] : ""} - hạn: ${item.han ? new Date(item.han).toISOString().split("T")[0] : ""}`)
         .join("\n");
 
       return res.json({
@@ -699,11 +1042,13 @@ app.post("/chat-ai", async (req, res) => {
     const [staffResult, taskResult, thongKeResult] = await Promise.all([
 
       pool.request().query(`
-                SELECT
-                    ten,
-                    email,
-                    role
-                FROM NhanVien
+        SELECT
+            ten,
+            email,
+            soDienThoai,
+            gioiTinh,
+            role
+        FROM NhanVien
                 ORDER BY id DESC
             `),
 
@@ -712,6 +1057,7 @@ app.post("/chat-ai", async (req, res) => {
                     cv.tieuDe,
                     cv.moTa,
                     cv.trangThai,
+                    cv.ngayGiao,
                     cv.han,
                     nv.ten AS tenNhanVien
                 FROM CongViec cv
