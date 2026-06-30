@@ -87,6 +87,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return d.toISOString().split("T")[0];
     }
 
+    function formatDateTime(dateValue) {
+        if (!dateValue) return "";
+
+        const d = new Date(dateValue);
+
+        if (Number.isNaN(d.getTime())) {
+            return String(dateValue).replace("T", " ").split(".")[0];
+        }
+
+        return d.toLocaleString("vi-VN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+    }
+
     function isOverdue(item) {
         if (!item.han || ["Hoàn thành", "Chờ duyệt"].includes(item.trangThai)) return false;
 
@@ -240,7 +259,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${assessments.slice(0, 6).map(item => `
                     <div class="advice-item ${item.status.type}">
                         <strong>${safeText(item.employee.ten)}</strong>
-                        <span>${item.status.label} - ${item.status.detail}</span>
+                        <span>
+                            ${safeText(item.employee.tenPhongBan || "Chưa phân phòng")}
+                            - ${item.status.label} - ${item.status.detail}
+                        </span>
                     </div>
                 `).join("")}
             </div>
@@ -269,7 +291,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     data-workload="${item.status.type}"
                     ${String(item.employee.id) === String(selectedId) ? "selected" : ""}
                 >
-                    ${item.employee.ten} - ${item.status.label} (${item.status.detail})
+                    ${item.employee.ten}
+                    - ${item.employee.tenPhongBan || "Chưa phân phòng"}
+                    - ${item.status.label} (${item.status.detail})
                 </option>
             `).join("");
 
@@ -784,7 +808,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <div>${safeText(item.noiDung)}</div>
                             <small>
                                 ${item.tenNhanVien ? safeText(item.tenNhanVien) : "Hệ thống"}
-                                - ${formatDate(item.thoiGian)}
+                                - ${formatDateTime(item.thoiGian)}
                             </small>
                         </li>
                     `).join("")}

@@ -11,11 +11,13 @@ const showAddBtn = document.getElementById("showAddNhanVienBtn");
 const formCard = document.getElementById("nhanVienFormCard");
 const searchInput = document.getElementById("searchNhanVien");
 const workloadFilter = document.getElementById("workloadFilter");
+const departmentFilter = document.getElementById("departmentFilter");
 const employeeSummary = document.getElementById("employeeSummary");
 
 let editingNhanVienId = null;
 let allNhanVien = [];
 let allCongViec = [];
+let allPhongBan = [];
 
 if (user.role !== "admin") {
     if (showAddBtn) showAddBtn.style.display = "none";
@@ -201,9 +203,36 @@ function getEmployeeAvatar(employee) {
     return "👤";
 }
 
+function renderPhongBanOptions() {
+    const formSelect = document.getElementById("phongBanNhanVien");
+
+    if (departmentFilter) {
+        departmentFilter.innerHTML = `
+            <option value="all">Tất cả</option>
+            ${allPhongBan.map(item => `
+                <option value="${item.id}">${escapeText(item.tenPhongBan)}</option>
+            `).join("")}
+        `;
+    }
+
+    if (formSelect) {
+        const currentValue = formSelect.value;
+
+        formSelect.innerHTML = `
+            <option value="">Chưa chọn phòng ban</option>
+            ${allPhongBan.map(item => `
+                <option value="${item.id}">${escapeText(item.tenPhongBan)}</option>
+            `).join("")}
+        `;
+
+        formSelect.value = currentValue || "";
+    }
+}
+
 function getFilteredNhanVien() {
     const keyword = (searchInput?.value || "").trim().toLowerCase();
     const selectedWorkload = workloadFilter?.value || "all";
+    const selectedDepartment = departmentFilter?.value || "all";
 
     return allNhanVien.filter(employee => {
         const stats = getWorkloadStats(employee);
@@ -213,6 +242,7 @@ function getFilteredNhanVien() {
             employee.email,
             employee.soDienThoai,
             employee.gioiTinh,
+            employee.tenPhongBan,
             employee.role,
             workload.label
         ].join(" ").toLowerCase();
@@ -221,8 +251,11 @@ function getFilteredNhanVien() {
         const matchWorkload =
             selectedWorkload === "all"
             || workload.key === selectedWorkload;
+        const matchDepartment =
+            selectedDepartment === "all"
+            || String(employee.phongBanId || "") === String(selectedDepartment);
 
-        return matchKeyword && matchWorkload;
+        return matchKeyword && matchWorkload && matchDepartment;
     });
 }
 
@@ -286,6 +319,7 @@ function renderNhanVien() {
                                 Email: ${escapeText(item.email)}<br>
                                 Số điện thoại: ${escapeText(item.soDienThoai || "Chưa cập nhật")}<br>
                                 Giới tính: ${escapeText(item.gioiTinh || "Chưa cập nhật")}<br>
+                                Phòng ban: ${escapeText(item.tenPhongBan || "Chưa phân phòng")}<br>
                                 Vai trò: ${escapeText(item.role)}
                             </div>
                         </div>
@@ -326,6 +360,7 @@ function renderNhanVien() {
                         '${escapeText(item.email)}',
                         '${escapeText(item.soDienThoai || "")}',
                         '${escapeText(item.gioiTinh || "Nam")}',
+                        '${escapeText(item.phongBanId || "")}',
                         '${escapeText(item.matkhau || "")}',
                         '${escapeText(item.role)}'
                     )">
@@ -348,13 +383,15 @@ async function loadNhanVien() {
     box.innerHTML = "Đang tải...";
 
     try {
-        const [nhanVienResponse, congViecResponse] = await Promise.all([
+        const [nhanVienResponse, congViecResponse, phongBanResponse] = await Promise.all([
             fetch(`${API_BASE}/nhanvien`),
-            fetch(`${API_BASE}/congviec`)
+            fetch(`${API_BASE}/congviec`),
+            fetch(`${API_BASE}/phongban`)
         ]);
 
         allNhanVien = await nhanVienResponse.json();
         allCongViec = await congViecResponse.json();
+        allPhongBan = await phongBanResponse.json();
 
         if (!Array.isArray(allNhanVien) || allNhanVien.length === 0) {
             box.innerHTML = "Không có dữ liệu nhân viên";
@@ -365,6 +402,11 @@ async function loadNhanVien() {
             allCongViec = [];
         }
 
+        if (!Array.isArray(allPhongBan)) {
+            allPhongBan = [];
+        }
+
+        renderPhongBanOptions();
         renderNhanVien();
     } catch (error) {
         box.innerHTML = "Lỗi tải nhân viên";
@@ -377,7 +419,7 @@ window.toggleNhanVienTasks = function (id) {
     taskList?.classList.toggle("open");
 };
 
-function editNhanVien(id, ten, email, soDienThoai, gioiTinh, matkhau, role) {
+function editNhanVien(id, ten, email, soDienThoai, gioiTinh, phongBanId, matkhau, role) {
     editingNhanVienId = id;
 
     if (formCard.style.display === "none")
@@ -391,6 +433,7 @@ function editNhanVien(id, ten, email, soDienThoai, gioiTinh, matkhau, role) {
     document.getElementById("emailNhanVien").value = email;
     document.getElementById("soDienThoaiNhanVien").value = soDienThoai;
     document.getElementById("gioiTinhNhanVien").value = gioiTinh || "Nam";
+    document.getElementById("phongBanNhanVien").value = phongBanId || "";
     document.getElementById("matkhauNhanVien").value = matkhau;
     document.getElementById("roleNhanVien").value = role;
 
@@ -414,12 +457,14 @@ document.getElementById("cancelNhanVienBtn")
 
 searchInput?.addEventListener("input", renderNhanVien);
 workloadFilter?.addEventListener("change", renderNhanVien);
+departmentFilter?.addEventListener("change", renderNhanVien);
 
 async function saveNhanVien() {
     const ten = document.getElementById("tenNhanVien").value.trim().replace(/\s+/g, " ");
     const email = document.getElementById("emailNhanVien").value.trim().toLowerCase();
     const soDienThoai = document.getElementById("soDienThoaiNhanVien").value.trim();
     const gioiTinh = document.getElementById("gioiTinhNhanVien").value;
+    const phongBanId = document.getElementById("phongBanNhanVien").value;
     const matkhau = document.getElementById("matkhauNhanVien").value.trim();
     const role = document.getElementById("roleNhanVien").value;
     const message = document.getElementById("nhanVienMessage");
@@ -458,7 +503,7 @@ async function saveNhanVien() {
                 {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ten, email, soDienThoai, gioiTinh, matkhau, role })
+                    body: JSON.stringify({ ten, email, soDienThoai, gioiTinh, phongBanId, matkhau, role })
                 });
         } else {
             response = await fetch(
@@ -466,7 +511,7 @@ async function saveNhanVien() {
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ten, email, soDienThoai, gioiTinh, matkhau, role })
+                    body: JSON.stringify({ ten, email, soDienThoai, gioiTinh, phongBanId, matkhau, role })
                 });
         }
 
@@ -530,6 +575,7 @@ function resetNhanVienForm() {
     document.getElementById("emailNhanVien").value = "";
     document.getElementById("soDienThoaiNhanVien").value = "";
     document.getElementById("gioiTinhNhanVien").value = "Nam";
+    document.getElementById("phongBanNhanVien").value = "";
     document.getElementById("matkhauNhanVien").value = "";
     document.getElementById("roleNhanVien").value = "staff";
     document.getElementById("addNhanVienBtn").textContent = "Thêm nhân viên";

@@ -99,13 +99,34 @@ app.get("/", (req, res) => {
 });
 
 
+app.get("/phongban", async (req, res) => {
+  try {
+    const pool = await connectDB();
+    const result = await pool.request().query(`
+      SELECT id, tenPhongBan, moTa
+      FROM PhongBan
+      ORDER BY tenPhongBan ASC
+    `);
+
+    res.json(result.recordset);
+  } catch (error) {
+    console.error("Loi /phongban:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/nhanvien", async (req, res) => {
   try {
     const pool = await connectDB();
     const result = await pool.request().query(`
-      SELECT * FROM NhanVien
-      WHERE role = 'staff'
-      ORDER BY id DESC
+      SELECT
+        nv.*,
+        pb.tenPhongBan
+      FROM NhanVien nv
+      LEFT JOIN PhongBan pb
+        ON nv.phongBanId = pb.id
+      WHERE nv.role = 'staff'
+      ORDER BY nv.id DESC
     `);
     res.json(result.recordset);
   } catch (error) {
@@ -301,9 +322,19 @@ app.post("/login", async (req, res) => {
       .input("email", sql.NVarChar, email)
       .input("matkhau", sql.NVarChar, matkhau)
       .query(`
-        SELECT id, ten, email, soDienThoai, gioiTinh, role
-        FROM NhanVien
-        WHERE email = @email AND matkhau = @matkhau
+        SELECT
+          nv.id,
+          nv.ten,
+          nv.email,
+          nv.soDienThoai,
+          nv.gioiTinh,
+          nv.role,
+          nv.phongBanId,
+          pb.tenPhongBan
+        FROM NhanVien nv
+        LEFT JOIN PhongBan pb
+          ON nv.phongBanId = pb.id
+        WHERE nv.email = @email AND nv.matkhau = @matkhau
       `);
 
     if (result.recordset.length === 0) {
@@ -322,11 +353,12 @@ app.post("/login", async (req, res) => {
 
 app.post("/nhanvien", async (req, res) => {
   try {
-    const { ten, email, soDienThoai, gioiTinh, matkhau, role } = req.body;
+    const { ten, email, soDienThoai, gioiTinh, matkhau, role, phongBanId } = req.body;
     const cleanTen = String(ten || "").trim().replace(/\s+/g, " ");
     const cleanEmail = String(email || "").trim().toLowerCase();
     const cleanPhone = String(soDienThoai || "").trim();
     const cleanGender = String(gioiTinh || "").trim();
+    const cleanPhongBanId = phongBanId ? Number(phongBanId) : null;
 
     if (!isValidName(cleanTen)) {
       return res.status(400).json({
@@ -354,6 +386,17 @@ app.post("/nhanvien", async (req, res) => {
 
     const pool = await connectDB();
 
+    if (cleanPhongBanId) {
+      const phongBanCheck = await pool
+        .request()
+        .input("phongBanId", sql.Int, cleanPhongBanId)
+        .query("SELECT id FROM PhongBan WHERE id = @phongBanId");
+
+      if (phongBanCheck.recordset.length === 0) {
+        return res.status(400).json({ message: "Phong ban khong hop le" });
+      }
+    }
+
     const check = await pool
       .request()
       .input("email", sql.NVarChar, cleanEmail)
@@ -371,9 +414,10 @@ app.post("/nhanvien", async (req, res) => {
       .input("gioiTinh", sql.NVarChar, cleanGender)
       .input("matkhau", sql.NVarChar, matkhau)
       .input("role", sql.NVarChar, role || "staff")
+      .input("phongBanId", sql.Int, cleanPhongBanId)
       .query(`
-        INSERT INTO NhanVien (ten, email, soDienThoai, gioiTinh, matkhau, role)
-        VALUES (@ten, @email, @soDienThoai, @gioiTinh, @matkhau, @role)
+        INSERT INTO NhanVien (ten, email, soDienThoai, gioiTinh, matkhau, role, phongBanId)
+        VALUES (@ten, @email, @soDienThoai, @gioiTinh, @matkhau, @role, @phongBanId)
       `);
 
     res.json({ message: "Thêm nhân viên thành công" });
@@ -395,13 +439,15 @@ app.put("/nhanvien/:id", async (req, res) => {
       soDienThoai,
       gioiTinh,
       matkhau,
-      role
+      role,
+      phongBanId
     } = req.body;
 
     const cleanTen = String(ten || "").trim().replace(/\s+/g, " ");
     const cleanEmail = String(email || "").trim().toLowerCase();
     const cleanPhone = String(soDienThoai || "").trim();
     const cleanGender = String(gioiTinh || "").trim();
+    const cleanPhongBanId = phongBanId ? Number(phongBanId) : null;
 
     if (!isValidName(cleanTen)) {
       return res.status(400).json({
@@ -428,6 +474,19 @@ app.put("/nhanvien/:id", async (req, res) => {
     }
 
     const pool = await connectDB();
+
+    if (cleanPhongBanId) {
+      const phongBanCheck = await pool
+        .request()
+        .input("phongBanId", sql.Int, cleanPhongBanId)
+        .query("SELECT id FROM PhongBan WHERE id = @phongBanId");
+
+      if (phongBanCheck.recordset.length === 0) {
+        return res.status(400).json({
+          message: "Phong ban khong hop le"
+        });
+      }
+    }
 
     const check = await pool
       .request()
@@ -456,6 +515,7 @@ app.put("/nhanvien/:id", async (req, res) => {
       .input("gioiTinh", sql.NVarChar, cleanGender)
       .input("matkhau", sql.NVarChar, matkhau)
       .input("role", sql.NVarChar, role)
+      .input("phongBanId", sql.Int, cleanPhongBanId)
       .query(`
         UPDATE NhanVien
         SET
@@ -464,7 +524,8 @@ app.put("/nhanvien/:id", async (req, res) => {
           soDienThoai = @soDienThoai,
           gioiTinh = @gioiTinh,
           matkhau = @matkhau,
-          role = @role
+          role = @role,
+          phongBanId = @phongBanId
         WHERE id = @id
       `);
 

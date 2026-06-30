@@ -133,7 +133,7 @@
 
  .filter-row {
      display: grid;
-     grid-template-columns: minmax(260px, 520px) 210px auto;
+     grid-template-columns: minmax(240px, 1fr) 190px 190px auto;
      gap: 14px;
      align-items: end;
  }
@@ -149,7 +149,8 @@
  }
 
  #searchNhanVien,
- #workloadFilter {
+ #workloadFilter,
+ #departmentFilter {
      width: 100%;
      padding: 10px 12px;
      border-radius: 10px;
@@ -162,6 +163,7 @@
 
  #searchNhanVien:focus,
  #workloadFilter:focus,
+ #departmentFilter:focus,
  #nhanVienFormCard input:focus,
  #nhanVienFormCard select:focus {
      outline: none;
